@@ -1,0 +1,343 @@
+from flask import Flask, jsonify, request, make_response
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+import json
+from flask_cors import CORS
+# 初始化Flask应用
+app = Flask(__name__)
+CORS(app)  # 解决跨域问题
+
+# 数据库配置（示例配置，实际需根据环境修改）
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:password@localhost/game_market'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+
+# 数据库模型定义
+class GameInfo(db.Model):
+    __tablename__ = 'game_info'
+    game_id = db.Column(db.Integer, primary_key=True)
+    game_name = db.Column(db.String(100), nullable=False)
+    game_type = db.Column(db.String(50), nullable=False)
+    publisher = db.Column(db.String(50), nullable=False)
+    release_date = db.Column(db.Date)
+    platform = db.Column(db.String(30))
+
+
+class MarketRevenue(db.Model):
+    __tablename__ = 'market_revenue'
+    id = db.Column(db.Integer, primary_key=True)
+    game_id = db.Column(db.Integer, db.ForeignKey('game_info.game_id'))
+    revenue = db.Column(db.DECIMAL(15, 2), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    region = db.Column(db.String(50), nullable=False)
+
+
+class UserProfile(db.Model):
+    __tablename__ = 'user_profile'
+    user_id = db.Column(db.Integer, primary_key=True)
+    age = db.Column(db.Integer)
+    gender = db.Column(db.String(10))
+    region = db.Column(db.String(50))
+    favorite_type = db.Column(db.String(50))
+    spending_level = db.Column(db.String(20))
+
+
+# 接口1：获取游戏类型列表
+@app.route('/api/game/types', methods=['GET'])
+def get_game_types():
+    """
+    获取所有游戏类型列表
+    ---
+    tags:
+      - 游戏基础数据
+    responses:
+      200:
+        description: 成功获取游戏类型
+        schema:
+          type: object
+          properties:
+            code:
+              type: integer
+              example: 200
+            message:
+              type: string
+              example: "操作成功"
+            data:
+              type: array
+              items:
+                type: string
+                example: 角色扮演
+    """
+    try:
+        # 从数据库获取不同的游戏类型
+        types = db.session.query(GameInfo.game_type).distinct().all()
+        type_list = [t[0] for t in types]
+        return jsonify({
+            "code": 200,
+            "message": "操作成功",
+            "data": type_list
+        })
+    except Exception as e:
+        return jsonify({
+            "code": 500,
+            "message": f"服务器错误: {str(e)}",
+            "data": []
+        })
+
+
+# 接口2：获取年度收入趋势
+@app.route('/api/revenue/yearly', methods=['GET'])
+def get_yearly_revenue():
+    """
+    获取指定年份的收入趋势数据
+    ---
+    tags:
+      - 市场收入分析
+    parameters:
+      - name: year
+        in: query
+        type: integer
+        required: true
+        example: 2024
+    responses:
+      200:
+        description: 成功获取年度收入数据
+        schema:
+          type: object
+          properties:
+            code:
+              type: integer
+              example: 200
+            message:
+              type: string
+              example: "操作成功"
+            data:
+              type: array
+              items:
+                type: object
+                properties:
+                  month:
+                    type: integer
+                    example: 1
+                  revenue:
+                    type: number
+                    example: 123456789.00
+    """
+    try:
+        year = request.args.get('year', type=int)
+        if not year:
+            return jsonify({
+                "code": 400,
+                "message": "缺少必要参数year",
+                "data": []
+            })
+
+        # 示例数据（实际需从数据库查询）
+        # 模拟2024年各月收入数据（单位：美元）
+        monthly_data = [
+            {"month": 1, "revenue": 250000000.00},
+            {"month": 2, "revenue": 280000000.00},
+            {"month": 3, "revenue": 320000000.00},
+            {"month": 4, "revenue": 300000000.00},
+            {"month": 5, "revenue": 350000000.00},
+            {"month": 6, "revenue": 380000000.00},
+            {"month": 7, "revenue": 360000000.00},
+            {"month": 8, "revenue": 370000000.00},
+            {"month": 9, "revenue": 400000000.00},
+            {"month": 10, "revenue": 420000000.00},
+            {"month": 11, "revenue": 450000000.00},
+            {"month": 12, "revenue": 500000000.00}
+        ]
+
+        return jsonify({
+            "code": 200,
+            "message": "操作成功",
+            "data": monthly_data
+        })
+    except Exception as e:
+        return jsonify({
+            "code": 500,
+            "message": f"服务器错误: {str(e)}",
+            "data": []
+        })
+
+
+# 接口3：获取用户画像数据
+@app.route('/api/user/profile', methods=['GET'])
+def get_user_profile():
+    """
+    获取用户画像统计数据
+    ---
+    tags:
+      - 用户分析
+    parameters:
+      - name: type
+        in: query
+        type: string
+        required: false
+        example: age
+    responses:
+      200:
+        description: 成功获取用户画像数据
+        schema:
+          type: object
+          properties:
+            code:
+              type: integer
+              example: 200
+            message:
+              type: string
+              example: "操作成功"
+            data:
+              type: object
+              properties:
+                age_distribution:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      age_range:
+                        type: string
+                        example: "18-25"
+                      percentage:
+                        type: number
+                        example: 35.2
+                gender_ratio:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      gender:
+                        type: string
+                        example: "男"
+                      percentage:
+                        type: number
+                        example: 58.7
+    """
+    try:
+        # 示例数据（实际需从数据库查询）
+        age_data = [
+            {"age_range": "18-25", "percentage": 35.2},
+            {"age_range": "26-35", "percentage": 42.8},
+            {"age_range": "36-45", "percentage": 15.5},
+            {"age_range": "46+", "percentage": 6.5}
+        ]
+
+        gender_data = [
+            {"gender": "男", "percentage": 58.7},
+            {"gender": "女", "percentage": 41.3}
+        ]
+
+        return jsonify({
+            "code": 200,
+            "message": "操作成功",
+            "data": {
+                "age_distribution": age_data,
+                "gender_ratio": gender_data
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            "code": 500,
+            "message": f"服务器错误: {str(e)}",
+            "data": {}
+        })
+
+
+# 接口4：自定义条件查询数据
+@app.route('/api/query', methods=['POST'])
+def custom_query():
+    """
+    自定义条件查询游戏数据
+    ---
+    tags:
+      - 综合查询
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            type:
+              type: string
+              example: 角色扮演
+            min_revenue:
+              type: number
+              example: 100000000.00
+    responses:
+      200:
+        description: 成功查询数据
+        schema:
+          type: object
+          properties:
+            code:
+              type: integer
+              example: 200
+            message:
+              type: string
+              example: "操作成功"
+            data:
+              type: array
+              items:
+                type: object
+                properties:
+                  game_name:
+                    type: string
+                    example: "原神"
+                  revenue:
+                    type: number
+                    example: 250000000.00
+                    format: double
+    """
+    try:
+        data = request.get_json()
+        game_type = data.get('type')
+        min_revenue = data.get('min_revenue', 0)
+
+        # 示例数据（实际需根据条件查询数据库）
+        if game_type == "角色扮演" and min_revenue >= 100000000:
+            result = [
+                {"game_name": "原神", "revenue": 250000000.00},
+                {"game_name": "最终幻想14", "revenue": 180000000.00},
+                {"game_name": "塞尔达传说：王国之泪", "revenue": 320000000.00}
+            ]
+        else:
+            result = []
+
+        return jsonify({
+            "code": 200,
+            "message": "操作成功",
+            "data": result
+        })
+    except Exception as e:
+        return jsonify({
+            "code": 500,
+            "message": f"服务器错误: {str(e)}",
+            "data": []
+        })
+
+
+# 错误处理
+@app.errorhandler(404)
+def not_found(error):
+    return make_response(jsonify({
+        "code": 404,
+        "message": "接口不存在",
+        "data": []
+    }), 404)
+
+
+@app.errorhandler(500)
+def internal_error(error):
+    return make_response(jsonify({
+        "code": 500,
+        "message": "服务器内部错误",
+        "data": []
+    }), 500)
+
+
+# 启动应用
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
