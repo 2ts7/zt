@@ -1,0 +1,127 @@
+{
+    "name": "游戏市场分析可视化系统API",
+    "description": "数据可视化结课作业接口文档",
+    "version": "1.0.0",
+    "projectId": "123456789",
+    "creator": "张三",
+    "createTime": "2025-06-17",
+    "updateTime": "2025-06-17",
+    "tags": [
+        {"name": "游戏基础数据"},
+        {"name": "市场收入分析"},
+        {"name": "用户分析"},
+        {"name": "综合查询"}
+    ],
+    "apis": [
+        {
+            "name": "获取游戏类型列表",
+            "path": "/api/game/types",
+            "method": "GET",
+            "tag": "游戏基础数据",
+            "description": "获取所有游戏类型列表",
+            "request": {
+                "query": []
+            },
+            "response": {
+                "statusCode": 200,
+                "headers": [
+                    {"name": "Content-Type", "value": "application/json"}
+                ],
+                "body": {
+                    "code": 200,
+                    "message": "操作成功",
+                    "data": ["角色扮演", "射击", "策略", "冒险", "模拟"]
+                }
+            }
+        },
+        {
+            "name": "获取年度收入趋势",
+            "path": "/api/revenue/yearly",
+            "method": "GET",
+            "tag": "市场收入分析",
+            "description": "获取指定年份的收入趋势数据",
+            "request": {
+                "query": [
+                    {"name": "year", "type": "integer", "required": true, "example": 2024}
+                ]
+            },
+            "response": {
+                "statusCode": 200,
+                "headers": [
+                    {"name": "Content-Type", "value": "application/json"}
+                ],
+                "body": {
+                    "code": 200,
+                    "message": "操作成功",
+                    "data": [
+                        {"month": 1, "revenue": 250000000.00},
+                        {"month": 2, "revenue": 280000000.00},
+                        {"month": 3, "revenue": 320000000.00}
+                    ]
+                }
+            }
+        },
+        {
+            "name": "获取用户画像数据",
+            "path": "/api/user/profile",
+            "method": "GET",
+            "tag": "用户分析",
+            "description": "获取用户画像统计数据",
+            "request": {
+                "query": [
+                    {"name": "type", "type": "string", "required": false, "example": "age"}
+                ]
+            },
+            "response": {
+                "statusCode": 200,
+                "headers": [
+                    {"name": "Content-Type", "value": "application/json"}
+                ],
+                "body": {
+                    "code": 200,
+                    "message": "操作成功",
+                    "data": {
+                        "age_distribution": [
+                            {"age_range": "18-25", "percentage": 35.2},
+                            {"age_range": "26-35", "percentage": 42.8}
+                        ],
+                        "gender_ratio": [
+                            {"gender": "男", "percentage": 58.7},
+                            {"gender": "女", "percentage": 41.3}
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "name": "自定义条件查询数据",
+            "path": "/api/query",
+            "method": "POST",
+            "tag": "综合查询",
+            "description": "自定义条件查询游戏数据",
+            "request": {
+                "body": {
+                    "type": "object",
+                    "properties": {
+                        "type": {"type": "string", "example": "角色扮演"},
+                        "min_revenue": {"type": "number", "example": 100000000.00}
+                    }
+                }
+            },
+            "response": {
+                "statusCode": 200,
+                "headers": [
+                    {"name": "Content-Type", "value": "application/json"}
+                ],
+                "body": {
+                    "code": 200,
+                    "message": "操作成功",
+                    "data": [
+                        {"game_name": "原神", "revenue": 250000000.00},
+                        {"game_name": "塞尔达传说：王国之泪", "revenue": 320000000.00}
+                    ]
+                }
+            }
+        }
+    ]
+}
